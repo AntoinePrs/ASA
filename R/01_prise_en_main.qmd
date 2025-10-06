@@ -1,0 +1,300 @@
+---
+title: "Fouille de données et création d'objets spatiaux dans R"
+author: "Antoine Peris"
+format: html
+editor: visual
+lang: fr
+---
+
+## Objectif
+
+Cette séance a pour objectif de se remémorer des éléments de syntaxe de R (le chargement des données, la manipulation de tableaux, etc.) et de découvrir deux familles d'outils très utiles dans la perspective d'acquérir et de gérer des données spatiales :
+
+-   les expressions régulières (qui permettent d'aller récupérer des informations de données textuelles peu structurées)
+
+-   les objets spatiaux vectoriels (qui permettent de réaliser des traitements géomatiques en R, pré-requis pour de l'analyse spatiale)
+
+Pour cela, nous travaillerons sur un projet concret : la construction d’un tableau de données sur les immeubles en péril à Bordeaux à partir de arrêtés publiés par le conseil municipal de la ville.
+
+Nous partons de données brutes : le fichier est téléchargeable [ici](https://datahub.bordeaux-metropole.fr/explore/dataset/bor_arretes/export/).
+
+## Chargement et inspection des données
+
+Pour le chargement d'un fichier `.csv`, nous allons utiliser le package **{readr}** qui optimise la lecture des fichiers. On charge simultanément **{dplyr}** qui facilite la manipulation de données tabulaires.
+
+```{r}
+#| message: false
+#| warning: false
+library(readr)
+library(dplyr)
+```
+
+Le fichier utilise le point-virgule comme séparateur (comme souvent pour les fichiers issus de producteur de données français), il faut donc le lire avec `read_csv2()` plutôt qu’avec `read_csv()`.
+
+```{r}
+#| message: false
+#| warning: false
+arretes <- read_csv2("../data/bor_affichage-reglementaire.csv")
+```
+
+On peut regarder d'un coup d’œil les dimensions et le contenu du tableau.
+
+```{r}
+glimpse(arretes)
+```
+
+On visualise ensuite les premières lignes.
+
+```{r}
+head(arretes, n = 2) %>% knitr::kable()
+```
+
+On voit que l'essentiel des informations est contenu de manière non-structurée dans la colonne **`` arretes$`Intitulé de l’acte` ``** (qui possède au passage un nom peu pratique à manipuler dans du code). Il y a par ailleurs des colonnes qui ne nous serviront pas.
+
+On sélectionnera et renommera ainsi les colonnes :
+
+```{r}
+arretes <- arretes %>% 
+  select(nature=`Nature de l'acte`, 
+         numero=`Numéro de l'acte`, 
+         intitule=`Intitulé de l'acte`, 
+         date=`Date d'affichage`)
+```
+
+## Extraction d'informations
+
+### L'année de publication des actes
+
+La première extraction que l'on va faire concerne la date de publication des arrêtés afin de voir la période couverte par notre base de données. La colonne `arretes$date` contient l'information qui nous intéresse avec une granularité temporelle cependant trop fine.
+
+```{r}
+arretes$date[1:10]
+```
+
+Pour extraire l'information qui nous intéresse, on peut se focaliser sur les 4 premiers caractères de la date qui correspondent à l'année.
+
+```{r}
+arretes$annee <- substr(arretes$date,1, 4)
+
+arretes_annee <- arretes %>% 
+  group_by(annee) %>% 
+  summarise(n=n())
+```
+
+On pourra représenter cette information par un graphique.
+
+```{r}
+library(ggplot2)
+
+ggplot()+
+  geom_col(data = arretes_annee, aes(x=annee, y=n))+
+  labs(y="Nombre d'actes", 
+       x="Année")
+```
+
+### Les types d'acte
+
+La difficulté principale de l'exercice réside dans l'extraction d'informations non-structurées des chaînes de caractères qui composent le titre des actes. Pour commencer ce travail, on va d'abord en visualiser quelques-unes afin de voir si on peut dégager des éléments de structuration.
+
+```{r}
+arretes$intitule[sample(1:nrow(arretes), 5)]
+```
+
+On voit que le type d'acte figure en début de chaîne, séparé du reste par un tiret (`-`). On peut mobiliser une **expression régulière** (***regex***) pour extraire du texte qui suit un pattern identifié.
+
+::: callout-note
+### 🔍 Les expressions régulières (regex)
+
+Une **regex** (*regular expression*) est une **chaîne de caractères spéciale** qui permet de **décrire un motif** (ou *pattern*) dans du texte.\
+Elles sont très utiles pour :
+
+-   rechercher (`str_detect()`),
+
+-   extraire (`str_extract()`),
+
+-   remplacer (`str_replace()`),
+
+-   ou découper (`str_split()`)
+
+des morceaux de texte selon une **règle de forme**, et non un mot exact.
+
+En R, on les utilise souvent avec le package **{stringr}**.
+:::
+
+::: callout-tip
+### ⚙️ Exemple : extraire ce qu’il y a avant un tiret
+
+Supposons que nous ayons un vecteur de chaînes de caractères :
+
+```{r}
+library(stringr)
+
+x <- c("Bordeaux - Gironde", "Lyon - Rhône", "Marseille - Bouches-du-Rhône")
+```
+
+**Étape 1 : la regex**
+
+Le motif à décrire est : "tous les caractères avant un tiret"
+
+👉 En regex, cela s’écrit : `^[^-]+`
+
+-   `^` → début de la chaîne
+
+-   `[]` → ensemble de caractères
+
+-   `[^ ]` → tout sauf ce qui est entre les crochets
+
+-   `+` → répète 1 ou plusieurs fois
+
+**Étape 2 : l’appliquer avec** `str_extract()`
+
+```{r}
+str_extract(x, "^[^-]+")
+```
+
+On peut ensuite **supprimer les espaces** avec `str_trim()` :
+
+```{r}
+str_trim(str_extract(x, "^[^-]+"))
+```
+:::
+
+Appliqué aux titres des actes publiés par la ville de Bordeaux, on aura donc :
+
+```{r}
+arretes$type <- str_trim(tolower(str_extract(arretes$intitule, "^[^-]+")))
+
+sample(arretes$type, 10)
+```
+
+On peut également compléter cette identification par une variable qui repère quand la chaîne de caractère correspondant à l'intitulé de l'acte comporte "*immeuble*" ou "*habitation*".
+
+```{r}
+arretes <- arretes %>% 
+  mutate(immeuble=grepl("immeuble|habitation", tolower(intitule)))
+```
+
+Si on combine les deux colonnes, on peut voir quels types d'arrêtés mentionnent fréquemment des immeubles ou des habitations.
+
+```{r}
+#| message: false
+#| warning: false
+arretes_type_immeubles <- arretes %>% 
+  group_by(type, immeuble) %>% 
+  summarise(n=n()) %>% 
+  arrange(desc(immeuble), desc(n))
+
+arretes_type_immeubles %>% head(n = 10) %>% knitr::kable()
+```
+
+Après une inspection manuelle, on voit que les types d'arrêtés relatifs à la dégradation des immeubles sont les suivants :
+
+```{r}
+arretes_selec <- arretes_type_immeubles$type[c(1,2,4,5:8,10,11,13:15,22,54,99,100,106)]
+```
+
+On crée donc un nouvel objet avec uniquement les arrêtés relatifs à des immeubles.
+
+```{r}
+perils <- arretes %>% 
+  filter(type %in% arretes_selec)
+```
+
+Enfin, on ne veut travailler que sur la distribution spatiale des périls, peu importe s'ils ont été traités ou non. On retire donc des données tout ce qui relève des mainlevées.
+
+```{r}
+perils <- perils %>% 
+  filter(!grepl("mainlev", tolower(intitule)))
+```
+
+### La localisation des arrêtés
+
+Pour localiser les arrêtes, il va falloir extraire les adresses et les géocoder. On commence pour cela par définir la liste des types de voies que l’on souhaite détecter :
+
+```{r}
+types_voie <- c("rue", "avenue", "boulevard", "bd", "chemin", "impasse", "place", "quai", "allée", "cours")
+```
+
+On construit ensuite une expression régulière qui cherche une structure du type\
+numéro + (optionnellement "bis", "ter", etc.) + type de voie + nom de voie :
+
+```{r}
+pattern <- paste0(
+  "\\b\\d+\\s?(?:bis|ter|quater)?\\s+(", 
+  paste(types_voie, collapse = "|"), 
+  ")\\s+[[:alpha:]][[:alnum:]\\s\\-']+"
+)
+```
+
+On applique cette regex à la colonne `intitule` pour extraire les adresses :
+
+```{r}
+adresses <- str_extract(tolower(perils$intitule), regex(pattern, ignore_case = TRUE) )
+
+head(adresses)
+```
+
+Enfin, on nettoie le résultat en retirant la mention "à Bordeaux" et les espaces inutiles :
+
+```{r}
+perils$adresse <- trimws(gsub("à bordeaux", "", adresses))
+```
+
+Le résultat est une colonne `adresse` propre, contenant les adresses détectées automatiquement dans le texte.
+
+## La transformation de données tabulaires en données spatiales
+
+### Géocodage
+
+On commence par charger le package `banR`, qui permet de géocoder des adresses à partir de la Base Adresse Nationale (BAN).
+
+```{r}
+library(banR)
+```
+
+Avant de lancer le géocodage, on ajoute une colonne contenant le code INSEE de la commune de Bordeaux.\
+Cela permet de restreindre la recherche à cette seule commune et d’obtenir des résultats plus précis.
+
+```{r}
+perils$code_insee <- "33063"
+```
+
+On lance ensuite le géocodage à l’aide de la fonction `geocode_tbl()`, en précisant la colonne contenant les adresses (`adresse`) et celle avec le code INSEE (`code_insee`).
+
+```{r}
+perils_geo <- geocode_tbl(perils, adresse = adresse, code_insee = code_insee)
+```
+
+### Transformation en objet spatial
+
+On charge d’abord les packages nécessaires :
+
+-   `sf` pour manipuler des données spatiales,
+
+-   `mapview` pour visualiser les points sur une carte interactive.
+
+```{r}
+#| message: false
+#| warning: false
+library(sf) 
+library(mapview)
+```
+
+On filtre les résultats pour ne garder que les adresses qui ont bien été géocodées (c’est-à-dire celles dont la longitude n’est pas manquante).
+
+```{r}
+perils_geo <- perils_geo %>% filter(!is.na(longitude))
+```
+
+On transforme ensuite le tableau en un objet spatial (`sf`) en précisant les colonnes de coordonnées et le système de projection (ici WGS84, EPSG:4326).
+
+```{r}
+perils_geo_sf <- st_as_sf(perils_geo, coords = c("longitude", "latitude")) %>% 
+  st_set_crs(4326)
+```
+
+Enfin, on visualise les points sur une carte interactive, colorés selon l’année.
+
+```{r}
+mapview(perils_geo_sf, zcol = "annee", cex = 4)
+```

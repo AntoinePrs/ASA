@@ -1,0 +1,724 @@
+% Options for packages loaded elsewhere
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\PassOptionsToPackage{dvipsnames,svgnames,x11names}{xcolor}
+%
+\documentclass[
+  french,
+  letterpaper,
+  DIV=11,
+  numbers=noendperiod]{scrartcl}
+\usepackage{xcolor}
+\usepackage{amsmath,amssymb}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+% Make \paragraph and \subparagraph free-standing
+\makeatletter
+\ifx\paragraph\undefined\else
+  \let\oldparagraph\paragraph
+  \renewcommand{\paragraph}{
+    \@ifstar
+      \xxxParagraphStar
+      \xxxParagraphNoStar
+  }
+  \newcommand{\xxxParagraphStar}[1]{\oldparagraph*{#1}\mbox{}}
+  \newcommand{\xxxParagraphNoStar}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+  \let\oldsubparagraph\subparagraph
+  \renewcommand{\subparagraph}{
+    \@ifstar
+      \xxxSubParagraphStar
+      \xxxSubParagraphNoStar
+  }
+  \newcommand{\xxxSubParagraphStar}[1]{\oldsubparagraph*{#1}\mbox{}}
+  \newcommand{\xxxSubParagraphNoStar}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+\makeatother
+
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{241,243,245}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{#1}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.40,0.45,0.13}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\BuiltInTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{#1}}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.13,0.47,0.30}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{#1}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{\textit{#1}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{\textit{#1}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\ExtensionTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{#1}}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.28,0.35,0.67}{#1}}
+\newcommand{\ImportTok}[1]{\textcolor[rgb]{0.00,0.46,0.62}{#1}}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{#1}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{#1}}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{#1}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\RegionMarkerTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{#1}}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.13,0.47,0.30}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.13,0.47,0.30}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.07,0.07,0.07}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.13,0.47,0.30}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{\textit{#1}}}
+
+\usepackage{longtable,booktabs,array}
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\newsavebox\pandoc@box
+\newcommand*\pandocbounded[1]{% scales image to fit in text height/width
+  \sbox\pandoc@box{#1}%
+  \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+  \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+  \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi% select the smaller of both
+  \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+  \else\usebox{\pandoc@box}%
+  \fi%
+}
+% Set default figure placement to htbp
+\def\fps@figure{htbp}
+\makeatother
+
+
+
+\ifLuaTeX
+\usepackage[bidi=basic]{babel}
+\else
+\usepackage[bidi=default]{babel}
+\fi
+% get rid of language-specific shorthands (see #6817):
+\let\LanguageShortHands\languageshorthands
+\def\languageshorthands#1{}
+
+
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
+
+
+ 
+
+
+\KOMAoption{captions}{tableheading}
+\makeatletter
+\@ifpackageloaded{tcolorbox}{}{\usepackage[skins,breakable]{tcolorbox}}
+\@ifpackageloaded{fontawesome5}{}{\usepackage{fontawesome5}}
+\definecolor{quarto-callout-color}{HTML}{909090}
+\definecolor{quarto-callout-note-color}{HTML}{0758E5}
+\definecolor{quarto-callout-important-color}{HTML}{CC1914}
+\definecolor{quarto-callout-warning-color}{HTML}{EB9113}
+\definecolor{quarto-callout-tip-color}{HTML}{00A047}
+\definecolor{quarto-callout-caution-color}{HTML}{FC5300}
+\definecolor{quarto-callout-color-frame}{HTML}{acacac}
+\definecolor{quarto-callout-note-color-frame}{HTML}{4582ec}
+\definecolor{quarto-callout-important-color-frame}{HTML}{d9534f}
+\definecolor{quarto-callout-warning-color-frame}{HTML}{f0ad4e}
+\definecolor{quarto-callout-tip-color-frame}{HTML}{02b875}
+\definecolor{quarto-callout-caution-color-frame}{HTML}{fd7e14}
+\makeatother
+\makeatletter
+\@ifpackageloaded{caption}{}{\usepackage{caption}}
+\AtBeginDocument{%
+\ifdefined\contentsname
+  \renewcommand*\contentsname{Table des matières}
+\else
+  \newcommand\contentsname{Table des matières}
+\fi
+\ifdefined\listfigurename
+  \renewcommand*\listfigurename{Liste des Figures}
+\else
+  \newcommand\listfigurename{Liste des Figures}
+\fi
+\ifdefined\listtablename
+  \renewcommand*\listtablename{Liste des Tables}
+\else
+  \newcommand\listtablename{Liste des Tables}
+\fi
+\ifdefined\figurename
+  \renewcommand*\figurename{Figure}
+\else
+  \newcommand\figurename{Figure}
+\fi
+\ifdefined\tablename
+  \renewcommand*\tablename{Table}
+\else
+  \newcommand\tablename{Table}
+\fi
+}
+\@ifpackageloaded{float}{}{\usepackage{float}}
+\floatstyle{ruled}
+\@ifundefined{c@chapter}{\newfloat{codelisting}{h}{lop}}{\newfloat{codelisting}{h}{lop}[chapter]}
+\floatname{codelisting}{Listing}
+\newcommand*\listoflistings{\listof{codelisting}{Liste des Listings}}
+\makeatother
+\makeatletter
+\makeatother
+\makeatletter
+\@ifpackageloaded{caption}{}{\usepackage{caption}}
+\@ifpackageloaded{subcaption}{}{\usepackage{subcaption}}
+\makeatother
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  pdftitle={Fouille de données et création d'objets spatiaux dans R},
+  pdfauthor={Antoine Peris},
+  pdflang={fr},
+  colorlinks=true,
+  linkcolor={blue},
+  filecolor={Maroon},
+  citecolor={Blue},
+  urlcolor={Blue},
+  pdfcreator={LaTeX via pandoc}}
+
+
+\title{Fouille de données et création d'objets spatiaux dans R}
+\author{Antoine Peris}
+\date{}
+\begin{document}
+\maketitle
+
+
+\subsection{Objectif}\label{objectif}
+
+Cette séance a pour objectif de se remémorer des éléments de syntaxe de
+R (le chargement des données, la manipulation de tableaux, etc.) et de
+découvrir deux familles d'outils très utiles dans la perspective
+d'acquérir et de gérer des données spatiales :
+
+\begin{itemize}
+\item
+  les expressions régulières (qui permettent d'aller récupérer des
+  informations de données textuelles peu structurées)
+\item
+  les objets spatiaux vectoriels (qui permettent de réaliser des
+  traitements géomatiques en R, pré-requis pour de l'analyse spatiale)
+\end{itemize}
+
+Pour cela, nous travaillerons sur un projet concret : la construction
+d'un tableau de données sur les immeubles en péril à Bordeaux à partir
+de arrêtés publiés par le conseil municipal de la ville.
+
+Nous partons de données brutes : le fichier est téléchargeable
+\href{https://datahub.bordeaux-metropole.fr/explore/dataset/bor_arretes/export/}{ici}.
+
+\subsection{Chargement et inspection des
+données}\label{chargement-et-inspection-des-donnuxe9es}
+
+Pour le chargement d'un fichier \texttt{.csv}, nous allons utiliser le
+package \textbf{\{readr\}} qui optimise la lecture des fichiers. On
+charge simultanément \textbf{\{dplyr\}} qui facilite la manipulation de
+données tabulaires.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(readr)}
+\FunctionTok{library}\NormalTok{(dplyr)}
+\end{Highlighting}
+\end{Shaded}
+
+Le fichier utilise le point-virgule comme séparateur (comme souvent pour
+les fichiers issus de producteur de données français), il faut donc le
+lire avec \texttt{read\_csv2()} plutôt qu'avec \texttt{read\_csv()}.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{arretes }\OtherTok{\textless{}{-}} \FunctionTok{read\_csv2}\NormalTok{(}\StringTok{"../data/bor\_affichage{-}reglementaire.csv"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+On peut regarder d'un coup d'œil les dimensions et le contenu du
+tableau.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{glimpse}\NormalTok{(arretes)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+Rows: 43,395
+Columns: 8
+$ Collectivité                       <chr> "Ville de Bordeaux", "Ville de Bord~
+$ `Nature de l'acte`                 <chr> "Arrêté", "Arrêté", "Arrêté", "Arrê~
+$ `Numéro de l'acte`                 <chr> "202132825", "202133003", "20213300~
+$ `Intitulé de l'acte`               <chr> "Arrêté temporaire de circulation p~
+$ `Date d'affichage`                 <date> 2021-12-17, 2021-12-17, 2021-12-17~
+$ Trigramme                          <chr> "BOR", "BOR", "BOR", "BOR", "BOR", ~
+$ `Accès au document`                <chr> "https://cdn.scnbdx.fr/web-afresco/~
+$ `Accès document avec DCP (2 mois)` <chr> NA, NA, NA, NA, NA, NA, NA, NA, NA,~
+\end{verbatim}
+
+On visualise ensuite les premières lignes.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{head}\NormalTok{(arretes) }\SpecialCharTok{\%\textgreater{}\%}\NormalTok{ knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 14\tabcolsep) * \real{0.0499}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 14\tabcolsep) * \real{0.0471}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 14\tabcolsep) * \real{0.0471}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 14\tabcolsep) * \real{0.5014}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 14\tabcolsep) * \real{0.0471}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 14\tabcolsep) * \real{0.0277}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 14\tabcolsep) * \real{0.1884}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 14\tabcolsep) * \real{0.0914}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Collectivité
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Nature de l'acte
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Numéro de l'acte
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Intitulé de l'acte
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Date d'affichage
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Trigramme
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Accès au document
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Accès document avec DCP (2 mois)
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Ville de Bordeaux & Arrêté & 202132825 & Arrêté temporaire de
+circulation pour travaux-Quartier n°3 - Bordeaux Centre-Rue Ausone, de
+la Rue du Chai des Farines jusqu'au Cours d'Alsace Et Lorraine-1 -
+Circulation interdite & 2021-12-17 & BOR &
+https://cdn.scnbdx.fr/web-afresco/BOGABOR/BOR\_ARR\_202132825.pdf &
+NA \\
+Ville de Bordeaux & Arrêté & 202133003 & Arrêté temporaire de
+circulation pour travaux-Quartier n°3 - Bordeaux Centre-Rue Colbert, de
+la Rue Turenne jusqu'à la Rue de la Franchise-1 - Circulation interdite
+& 2021-12-17 & BOR &
+https://cdn.scnbdx.fr/web-afresco/BOGABOR/BOR\_ARR\_202133003.pdf &
+NA \\
+Ville de Bordeaux & Arrêté & 202133005 & Arrêté temporaire de
+circulation pour travaux-Quartier n°3 - Bordeaux Centre-49 Rue du Palais
+Gallien-1 - Circulation interdite & 2021-12-17 & BOR &
+https://cdn.scnbdx.fr/web-afresco/BOGABOR/BOR\_ARR\_202133005.pdf &
+NA \\
+Ville de Bordeaux & Arrêté & 202133430 & Arrêté temporaire de
+circulation pour travaux-Quartier n°6 - Bordeaux Sud-du n° 2 au n° 4 rue
+Vilaris et du n° 13 place Dormoy au n° 11 rue Vilaris -1 - Mise en
+impasse & 2021-12-20 & BOR &
+https://cdn.scnbdx.fr/web-afresco/BOGABOR/BOR\_ARR\_202133430.pdf &
+NA \\
+Ville de Bordeaux & Arrêté & 22BORPT00042 & ARRÊTÉ TEMPORAIRE DE
+CIRCULATION - Quartier n°2 - Chartrons/Grand Parc/Jardin Public-Rue
+Saint Laurent, du 1 jusqu'à la Rue Albert de Mun-1 - Circulation
+interdite & 2022-02-15 & BOR &
+https://cdn.scnbdx.fr/web-afresco/ADRDSCO/BOR\_ADRD\_22BORPT00042.pdf &
+NA \\
+Ville de Bordeaux & Arrêté & 22BORPT00193 & ARRÊTÉ TEMPORAIRE DE
+CIRCULATION - Quartier n°3 - Bordeaux Centre-36 Rue de la Benatte-1 -
+Neutralisation de voie & 2022-02-16 & BOR &
+https://cdn.scnbdx.fr/web-afresco/ADRDSCO/BOR\_ADRD\_22BORPT00193.pdf &
+NA \\
+\end{longtable}
+
+On voit que l'essentiel des informations est contenu de manière
+non-structurée dans la colonne
+\textbf{\texttt{arretes\$\textasciigrave{}Intitulé\ de\ l’acte\textasciigrave{}}}
+(qui possède au passage un nom peu pratique à manipuler dans du code).
+Il y a par ailleurs des colonnes qui ne nous serviront pas.
+
+On sélectionnera et renommera ainsi les colonnes :
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{arretes }\OtherTok{\textless{}{-}}\NormalTok{ arretes }\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{select}\NormalTok{(}\AttributeTok{nature=}\StringTok{\textasciigrave{}}\AttributeTok{Nature de l\textquotesingle{}acte}\StringTok{\textasciigrave{}}\NormalTok{, }
+         \AttributeTok{numero=}\StringTok{\textasciigrave{}}\AttributeTok{Numéro de l\textquotesingle{}acte}\StringTok{\textasciigrave{}}\NormalTok{, }
+         \AttributeTok{intitule=}\StringTok{\textasciigrave{}}\AttributeTok{Intitulé de l\textquotesingle{}acte}\StringTok{\textasciigrave{}}\NormalTok{, }
+         \AttributeTok{date=}\StringTok{\textasciigrave{}}\AttributeTok{Date d\textquotesingle{}affichage}\StringTok{\textasciigrave{}}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{Extraction d'informations}\label{extraction-dinformations}
+
+\subsubsection{L'année de publication des
+actes}\label{lannuxe9e-de-publication-des-actes}
+
+La première extraction que l'on va faire concerne la date de publication
+des arrêtés afin de voir la période couverte par notre base de données.
+La colonne \texttt{arretes\$date} contient l'information qui nous
+intéresse avec une granularité temporelle cependant trop fine.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{arretes}\SpecialCharTok{$}\NormalTok{date[}\DecValTok{1}\SpecialCharTok{:}\DecValTok{10}\NormalTok{]}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+ [1] "2021-12-17" "2021-12-17" "2021-12-17" "2021-12-20" "2022-02-15"
+ [6] "2022-02-16" "2022-02-14" "2022-02-21" "2022-03-07" "2021-11-16"
+\end{verbatim}
+
+Pour extraire l'information qui nous intéresse, on peut se focaliser sur
+les 4 premiers caractères de la date qui correspondent à l'année.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{arretes}\SpecialCharTok{$}\NormalTok{annee }\OtherTok{\textless{}{-}} \FunctionTok{substr}\NormalTok{(arretes}\SpecialCharTok{$}\NormalTok{date,}\DecValTok{1}\NormalTok{, }\DecValTok{4}\NormalTok{)}
+
+\NormalTok{arretes\_annee }\OtherTok{\textless{}{-}}\NormalTok{ arretes }\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{group\_by}\NormalTok{(annee) }\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{summarise}\NormalTok{(}\AttributeTok{n=}\FunctionTok{n}\NormalTok{())}
+\end{Highlighting}
+\end{Shaded}
+
+On pourra représenter cette information par un graphique.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(ggplot2)}
+
+\FunctionTok{ggplot}\NormalTok{()}\SpecialCharTok{+}
+  \FunctionTok{geom\_col}\NormalTok{(}\AttributeTok{data =}\NormalTok{ arretes\_annee, }\FunctionTok{aes}\NormalTok{(}\AttributeTok{x=}\NormalTok{annee, }\AttributeTok{y=}\NormalTok{n))}\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{y=}\StringTok{"Nombre d\textquotesingle{}actes"}\NormalTok{, }
+       \AttributeTok{x=}\StringTok{"Année"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\pandocbounded{\includegraphics[keepaspectratio]{01_prise_en_main_files/figure-pdf/unnamed-chunk-8-1.pdf}}
+
+\subsubsection{Les types d'acte}\label{les-types-dacte}
+
+La difficulté principale de l'exercice réside dans l'extraction
+d'informations non-structurées des chaînes de caractères qui composent
+le titre des actes. Pour commencer ce travail, on va d'abord en
+visualiser quelques-unes afin de voir si on peut dégager des éléments de
+structuration.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{arretes}\SpecialCharTok{$}\NormalTok{intitule[}\FunctionTok{sample}\NormalTok{(}\DecValTok{1}\SpecialCharTok{:}\FunctionTok{nrow}\NormalTok{(arretes), }\DecValTok{5}\NormalTok{)]}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+[1] "Arrêté temporaire de circulation pour travaux-Quartier n°4 - Saint Augustin/Tauzin/A. Dupeux-du 17 au 23 Rue Léon Roches des deux côtés de la voie-1 - Interdiction de stationnement"
+[2] "Arrêté temporaire de circulation pour travaux-Quartier n°3 - Bordeaux Centre-Rue Condillac, du 37 jusqu'à la Rue Buffon-1 - Interdiction de stationnement"                           
+[3] "DECISION DE TARIFS - FIXATION DE TARIFS POUR LA VENTE DE PRODUITS EN BOUTIQUE AU CAPC"                                                                                               
+[4] "Arrêté de mise en service de grue-Quartier n°6 - Bordeaux Sud- Rue Amédée Saint-Germain, ilot 9.12 \"Passage Saint Germain\"-Mise en service de grue (Bordeaux)"                     
+[5] "ARRÊTÉ TEMPORAIRE DE CIRCULATION - Quartier n°6 - Bordeaux Sud-Face au 82 et jusqu'au 58 Rue des Terres de Borde côté SNCF-1 - Neutralisation de voie"                               
+\end{verbatim}
+
+On voit que le type d'acte figure en début de chaîne, séparé du reste
+par un tiret (\texttt{-}). On peut mobiliser une \textbf{expression
+régulière} (\textbf{\emph{regex}}) pour extraire du texte qui suit un
+pattern identifié.
+
+\begin{tcolorbox}[enhanced jigsaw, toptitle=1mm, colbacktitle=quarto-callout-note-color!10!white, opacitybacktitle=0.6, bottomrule=.15mm, breakable, arc=.35mm, left=2mm, opacityback=0, rightrule=.15mm, colframe=quarto-callout-note-color-frame, coltitle=black, colback=white, leftrule=.75mm, bottomtitle=1mm, title=\textcolor{quarto-callout-note-color}{\faInfo}\hspace{0.5em}{🔍 Les expressions régulières (regex)}, toprule=.15mm, titlerule=0mm]
+
+Une \textbf{regex} (\emph{regular expression}) est une \textbf{chaîne de
+caractères spéciale} qui permet de \textbf{décrire un motif} (ou
+\emph{pattern}) dans du texte.\\
+Elles sont très utiles pour :
+
+\begin{itemize}
+\item
+  rechercher (\texttt{str\_detect()}),
+\item
+  extraire (\texttt{str\_extract()}),
+\item
+  remplacer (\texttt{str\_replace()}),
+\item
+  ou découper (\texttt{str\_split()})
+\end{itemize}
+
+des morceaux de texte selon une \textbf{règle de forme}, et non un mot
+exact.
+
+En R, on les utilise souvent avec le package \textbf{\{stringr\}}.
+
+\end{tcolorbox}
+
+\begin{tcolorbox}[enhanced jigsaw, toptitle=1mm, colbacktitle=quarto-callout-tip-color!10!white, opacitybacktitle=0.6, bottomrule=.15mm, breakable, arc=.35mm, left=2mm, opacityback=0, rightrule=.15mm, colframe=quarto-callout-tip-color-frame, coltitle=black, colback=white, leftrule=.75mm, bottomtitle=1mm, title=\textcolor{quarto-callout-tip-color}{\faLightbulb}\hspace{0.5em}{⚙️ Exemple : extraire ce qu'il y a avant un tiret}, toprule=.15mm, titlerule=0mm]
+
+Supposons que nous ayons un vecteur de chaînes de caractères :
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(stringr)}
+
+\NormalTok{x }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\StringTok{"Bordeaux {-} Gironde"}\NormalTok{, }\StringTok{"Lyon {-} Rhône"}\NormalTok{, }\StringTok{"Marseille {-} Bouches{-}du{-}Rhône"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\textbf{Étape 1 : la regex}
+
+Le motif à décrire est : ``tous les caractères avant un tiret''
+
+👉 En regex, cela s'écrit : \texttt{\^{}{[}\^{}-{]}+}
+
+\begin{itemize}
+\item
+  \texttt{\^{}} → début de la chaîne
+\item
+  \texttt{{[}{]}} → ensemble de caractères
+\item
+  \texttt{{[}\^{}\ {]}} → tout sauf ce qui est entre les crochets
+\item
+  \texttt{+} → répète 1 ou plusieurs fois
+\end{itemize}
+
+\textbf{Étape 2 : l'appliquer avec} \texttt{str\_extract()}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{str\_extract}\NormalTok{(x, }\StringTok{"\^{}[\^{}{-}]+"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+[1] "Bordeaux "  "Lyon "      "Marseille "
+\end{verbatim}
+
+On peut ensuite \textbf{supprimer les espaces} avec \texttt{str\_trim()}
+:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{str\_trim}\NormalTok{(}\FunctionTok{str\_extract}\NormalTok{(x, }\StringTok{"\^{}[\^{}{-}]+"}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+[1] "Bordeaux"  "Lyon"      "Marseille"
+\end{verbatim}
+
+\end{tcolorbox}
+
+Appliqué aux titres des actes publiés par la ville de Bordeaux, on aura
+donc :
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{arretes}\SpecialCharTok{$}\NormalTok{type }\OtherTok{\textless{}{-}} \FunctionTok{str\_trim}\NormalTok{(}\FunctionTok{tolower}\NormalTok{(}\FunctionTok{str\_extract}\NormalTok{(arretes}\SpecialCharTok{$}\NormalTok{intitule, }\StringTok{"\^{}[\^{}{-}]+"}\NormalTok{)))}
+
+\FunctionTok{sample}\NormalTok{(arretes}\SpecialCharTok{$}\NormalTok{type, }\DecValTok{10}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+ [1] "arrêté temporaire de circulation"             
+ [2] "arrêté temporaire de circulation"             
+ [3] "arrêté temporaire de circulation"             
+ [4] "mise en securite urgente"                     
+ [5] "arrêté de délégation de signature aux élus"   
+ [6] "arrêté temporaire de circulation pour travaux"
+ [7] "arrêté temporaire de circulation"             
+ [8] "arrêté de mise en place de grue"              
+ [9] "arrêté temporaire de circulation"             
+[10] "arrêté temporaire de circulation"             
+\end{verbatim}
+
+On peut également compléter cette identification par une variable qui
+repère quand la chaîne de caractère correspondant à l'intitulé de l'acte
+comporte ``\emph{immeuble}'' ou ``\emph{habitation}''.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{arretes }\OtherTok{\textless{}{-}}\NormalTok{ arretes }\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{immeuble=}\FunctionTok{grepl}\NormalTok{(}\StringTok{"immeuble|habitation"}\NormalTok{, }\FunctionTok{tolower}\NormalTok{(intitule)))}
+\end{Highlighting}
+\end{Shaded}
+
+Si on combine les deux colonnes, on peut voir quels types d'arrêtés
+mentionnent fréquemment des immeubles ou des habitations.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{arretes\_type\_immeubles }\OtherTok{\textless{}{-}}\NormalTok{ arretes }\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{group\_by}\NormalTok{(type, immeuble) }\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{summarise}\NormalTok{(}\AttributeTok{n=}\FunctionTok{n}\NormalTok{()) }\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{arrange}\NormalTok{(}\FunctionTok{desc}\NormalTok{(immeuble), }\FunctionTok{desc}\NormalTok{(n))}
+
+\NormalTok{arretes\_type\_immeubles }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{head}\NormalTok{(}\AttributeTok{n =} \DecValTok{10}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}\NormalTok{ knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}llr@{}}
+\toprule\noalign{}
+type & immeuble & n \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+mainlevee & TRUE & 277 \\
+urgence securite immeubles l.2212 & TRUE & 172 \\
+arrêté permanent de circulation et de stationnement & TRUE & 165 \\
+arrete de mise en securite urgente & TRUE & 54 \\
+mise en securite urgente & TRUE & 54 \\
+arrete de mise en securite ordinaire & TRUE & 52 \\
+mise en securite ordinaire & TRUE & 51 \\
+arrêté de mise en securite ordinaire & TRUE & 48 \\
+arrêté temporaire de circulation & TRUE & 44 \\
+arrêté mise en securite urgente & TRUE & 37 \\
+\end{longtable}
+
+Après une inspection manuelle, on voit que les types d'arrêtés relatifs
+à la dégradation des immeubles sont les suivants :
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{arretes\_selec }\OtherTok{\textless{}{-}}\NormalTok{ arretes\_type\_immeubles}\SpecialCharTok{$}\NormalTok{type[}\FunctionTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{,}\DecValTok{4}\NormalTok{,}\DecValTok{5}\SpecialCharTok{:}\DecValTok{8}\NormalTok{,}\DecValTok{10}\NormalTok{,}\DecValTok{11}\NormalTok{,}\DecValTok{13}\SpecialCharTok{:}\DecValTok{15}\NormalTok{,}\DecValTok{22}\NormalTok{,}\DecValTok{54}\NormalTok{,}\DecValTok{99}\NormalTok{,}\DecValTok{100}\NormalTok{,}\DecValTok{106}\NormalTok{)]}
+\end{Highlighting}
+\end{Shaded}
+
+On crée donc un nouvel objet avec uniquement les arrêtés relatifs à des
+immeubles.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{perils }\OtherTok{\textless{}{-}}\NormalTok{ arretes }\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{filter}\NormalTok{(type }\SpecialCharTok{\%in\%}\NormalTok{ arretes\_selec)}
+\end{Highlighting}
+\end{Shaded}
+
+Enfin, on ne veut travailler que sur la distribution spatiale des
+périls, peu importe s'ils ont été traités ou non. On retire donc des
+données tout ce qui relève des mainlevées.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{perils }\OtherTok{\textless{}{-}}\NormalTok{ perils }\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{filter}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{grepl}\NormalTok{(}\StringTok{"mainlev"}\NormalTok{, }\FunctionTok{tolower}\NormalTok{(intitule)))}
+\end{Highlighting}
+\end{Shaded}
+
+\subsubsection{La localisation des
+arrêtés}\label{la-localisation-des-arruxeatuxe9s}
+
+Pour localiser les arrêtes, il va falloir extraire les adresses et les
+géocoder. On commence pour cela par définir la liste des types de voies
+que l'on souhaite détecter :
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{types\_voie }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\StringTok{"rue"}\NormalTok{, }\StringTok{"avenue"}\NormalTok{, }\StringTok{"boulevard"}\NormalTok{, }\StringTok{"bd"}\NormalTok{, }\StringTok{"chemin"}\NormalTok{, }\StringTok{"impasse"}\NormalTok{, }\StringTok{"place"}\NormalTok{, }\StringTok{"quai"}\NormalTok{, }\StringTok{"allée"}\NormalTok{, }\StringTok{"cours"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+On construit ensuite une expression régulière qui cherche une structure
+du type\\
+numéro + (optionnellement ``bis'', ``ter'', etc.) + type de voie + nom
+de voie :
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{pattern }\OtherTok{\textless{}{-}} \FunctionTok{paste0}\NormalTok{(}
+  \StringTok{"}\SpecialCharTok{\textbackslash{}\textbackslash{}}\StringTok{b}\SpecialCharTok{\textbackslash{}\textbackslash{}}\StringTok{d+}\SpecialCharTok{\textbackslash{}\textbackslash{}}\StringTok{s?(?:bis|ter|quater)?}\SpecialCharTok{\textbackslash{}\textbackslash{}}\StringTok{s+("}\NormalTok{, }
+  \FunctionTok{paste}\NormalTok{(types\_voie, }\AttributeTok{collapse =} \StringTok{"|"}\NormalTok{), }
+  \StringTok{")}\SpecialCharTok{\textbackslash{}\textbackslash{}}\StringTok{s+[[:alpha:]][[:alnum:]}\SpecialCharTok{\textbackslash{}\textbackslash{}}\StringTok{s}\SpecialCharTok{\textbackslash{}\textbackslash{}}\StringTok{{-}\textquotesingle{}]+"}
+\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+On applique cette regex à la colonne \texttt{intitule} pour extraire les
+adresses :
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{adresses }\OtherTok{\textless{}{-}} \FunctionTok{str\_extract}\NormalTok{(}\FunctionTok{tolower}\NormalTok{(perils}\SpecialCharTok{$}\NormalTok{intitule), }\FunctionTok{regex}\NormalTok{(pattern, }\AttributeTok{ignore\_case =} \ConstantTok{TRUE}\NormalTok{) )}
+
+\FunctionTok{head}\NormalTok{(adresses)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+[1] "9 rue leyteire"                      NA                                   
+[3] "3 quai deschamps à bordeaux "        "86 rue sainte catherine à bordeaux "
+[5] "329 avenue thiers à bordeaux "       "329 avenue thiers "                 
+\end{verbatim}
+
+Enfin, on nettoie le résultat en retirant la mention ``à Bordeaux'' et
+les espaces inutiles :
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{perils}\SpecialCharTok{$}\NormalTok{adresse }\OtherTok{\textless{}{-}} \FunctionTok{trimws}\NormalTok{(}\FunctionTok{gsub}\NormalTok{(}\StringTok{"à bordeaux"}\NormalTok{, }\StringTok{""}\NormalTok{, adresses))}
+\end{Highlighting}
+\end{Shaded}
+
+Le résultat est une colonne \texttt{adresse} propre, contenant les
+adresses détectées automatiquement dans le texte.
+
+\subsection{La transformation de données tabulaires en données
+spatiales}\label{la-transformation-de-donnuxe9es-tabulaires-en-donnuxe9es-spatiales}
+
+\subsubsection{Géocodage}\label{guxe9ocodage}
+
+\subsubsection{Transformation en objet
+spatial}\label{transformation-en-objet-spatial}
+
+
+
+
+\end{document}
