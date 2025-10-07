@@ -4,16 +4,20 @@
 
 Supports du cours **Analyse Spatiale Avancée** de deuxième année de Master GEOTER. Le cours est en construction, il sera terminé à la fin de la première session.
 
-## Thématiques
+## Chapitres
 
-1 - Révision et prise en main des objets spatiaux dans R
+Prélude : création de données géographiques à partir de données peu structurées
 
-2 - Analyse d'autocorrélation spatiale
+1 - Opérations géomatiques élémentaires
 
-3 - Méthodes de régionalisation
+2 - Statistiques spatiales descriptives
 
-4 - Modèles gravitaires
+3 - Analyse d'autocorrélation spatiale
 
-5 - Régressions spatiales
+4 - Méthodes de régionalisation (*spatial clustering*)
 
-6 - Introduction au Machine Learning 
+5 - Modèles gravitaires
+
+6 - Régressions spatiales
+
+7 - Spatial Machine Learning 

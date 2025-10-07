@@ -1,5 +1,5 @@
 ---
-title: "Fouille de données et création d'objets spatiaux dans R"
+title: "Création de données géographiques à partir de données peu structurées"
 author: "Antoine Peris"
 format: html
 editor: visual
@@ -8,11 +8,7 @@ lang: fr
 
 ## Objectif
 
-Cette séance a pour objectif de se remémorer des éléments de syntaxe de R (le chargement des données, la manipulation de tableaux, etc.) et de découvrir deux familles d'outils très utiles dans la perspective d'acquérir et de gérer des données spatiales :
-
--   les expressions régulières (qui permettent d'aller récupérer des informations de données textuelles peu structurées)
-
--   les objets spatiaux vectoriels (qui permettent de réaliser des traitements géomatiques en R, pré-requis pour de l'analyse spatiale)
+Cette séance a pour objectif de se remémorer des éléments de syntaxe de R (le chargement des données, la manipulation de tableaux, etc.) et de découvrir une famille d'outils très utiles dans la perspective d'acquérir et de gérer des données : les expressions régulières (qui permettent d'aller récupérer des informations de données textuelles peu structurées).
 
 Pour cela, nous travaillerons sur un projet concret : la construction d’un tableau de données sur les immeubles en péril à Bordeaux à partir de arrêtés publiés par le conseil municipal de la ville.
 
@@ -242,7 +238,7 @@ perils$adresse <- trimws(gsub("à bordeaux", "", adresses))
 
 Le résultat est une colonne `adresse` propre, contenant les adresses détectées automatiquement dans le texte.
 
-## La transformation de données tabulaires en données spatiales
+## La transformation de données tabulaires en données géographiques
 
 ### Géocodage
 
@@ -252,8 +248,7 @@ On commence par charger le package `banR`, qui permet de géocoder des adresses 
 library(banR)
 ```
 
-Avant de lancer le géocodage, on ajoute une colonne contenant le code INSEE de la commune de Bordeaux.\
-Cela permet de restreindre la recherche à cette seule commune et d’obtenir des résultats plus précis.
+Avant de lancer le géocodage, on ajoute une colonne contenant le code INSEE de la commune de Bordeaux. Cela permet de restreindre la recherche à cette seule commune et d’obtenir des résultats plus précis.
 
 ```{r}
 perils$code_insee <- "33063"
@@ -265,36 +260,22 @@ On lance ensuite le géocodage à l’aide de la fonction `geocode_tbl()`, en pr
 perils_geo <- geocode_tbl(perils, adresse = adresse, code_insee = code_insee)
 ```
 
-### Transformation en objet spatial
-
-On charge d’abord les packages nécessaires :
-
--   `sf` pour manipuler des données spatiales,
-
--   `mapview` pour visualiser les points sur une carte interactive.
+Le géocodeur fournit un score de certitude. On ne garde que les scores élevés et les colonnes de latitude et de longitude.
 
 ```{r}
-#| message: false
-#| warning: false
-library(sf) 
-library(mapview)
+perils_geo <- perils_geo %>% 
+  filter(result_score >0.4) %>% 
+  select(nature, numero, intitule, date, annee, type, longitude, latitude, adress=result_label)
 ```
 
-On filtre les résultats pour ne garder que les adresses qui ont bien été géocodées (c’est-à-dire celles dont la longitude n’est pas manquante).
+Le résultat de ce script est une table avec la date, le type d'arrêté, son titre, son adresse et la latitude et la longitude de cette adresse.
 
 ```{r}
-perils_geo <- perils_geo %>% filter(!is.na(longitude))
+head(perils_geo)
 ```
 
-On transforme ensuite le tableau en un objet spatial (`sf`) en précisant les colonnes de coordonnées et le système de projection (ici WGS84, EPSG:4326).
+On pourra sauvegarder les données.
 
 ```{r}
-perils_geo_sf <- st_as_sf(perils_geo, coords = c("longitude", "latitude")) %>% 
-  st_set_crs(4326)
-```
-
-Enfin, on visualise les points sur une carte interactive, colorés selon l’année.
-
-```{r}
-mapview(perils_geo_sf, zcol = "annee", cex = 4)
+write_csv2(perils_geo, "../data/perils_geo.csv")
 ```

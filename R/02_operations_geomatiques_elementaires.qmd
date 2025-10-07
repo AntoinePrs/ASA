@@ -1,0 +1,109 @@
+---
+title: "Faire de la géomatique avec R"
+author: "Antoine Peris"
+format: html
+editor: visual
+lang: fr
+---
+
+Chargement du fichier.
+
+```{r}
+#| message: false
+#| warning: false
+library(readr)
+library(dplyr)
+
+perils_geo <- read_csv2("../data/perils_geo.csv")
+```
+
+### Transformation en objet spatial
+
+On charge d’abord les packages nécessaires :
+
+-   `sf` pour manipuler des données spatiales,
+
+-   `mapview` pour visualiser les points sur une carte interactive.
+
+```{r}
+#| message: false
+#| warning: false
+library(sf) 
+library(mapview)
+```
+
+On transforme ensuite le tableau en un objet spatial (`sf`) en précisant les colonnes de coordonnées et le système de projection (ici WGS84, EPSG:4326).
+
+```{r}
+perils_geo_sf <- st_as_sf(perils_geo, coords = c("longitude", "latitude")) %>% 
+  st_set_crs(4326)
+```
+
+Enfin, on visualise les points sur une carte interactive, colorés selon l’année.
+
+```{r}
+mapview(perils_geo_sf, zcol = "annee", cex = 4)
+```
+
+On sauvegarde notre nouvelle couche spatiale.
+
+```{r}
+st_write(perils_geo_sf, "../data/perils_geo.gpkg", append = F)
+```
+
+### Opérations spatiales élémentaires
+
+On va ensuite dénombrer les périls par IRIS. Pour cela, nous devons faire une intersection spatiale.
+
+Chargements de données sur les IRIS de Bordeaux.
+
+```{r}
+#| message: false
+#| warning: false
+iris <- st_read("../data/se_iri24_s.shp")
+```
+
+Reprojection de nos deux jeux de données.
+
+```{r}
+iris <- st_transform(iris, 2154)
+perils_geo_sf <- st_transform(perils_geo_sf, 2154)
+```
+
+Intersection.
+
+```{r}
+int <- st_intersection(perils_geo_sf, iris)
+```
+
+Débnombrement.
+
+```{r}
+nb_perils_iris <- int %>% 
+  as_tibble() %>% 
+  group_by(nom_iris, ident) %>% 
+  tally()
+```
+
+Jointure.
+
+```{r}
+iris <- left_join(iris, nb_perils_iris, by="ident")
+```
+
+Points dans les polygones (variante du centroïde).
+
+```{r}
+iris_pt <- st_point_on_surface(iris)
+```
+
+Carto.
+
+```{r}
+library(ggplot2)
+
+ggplot()+
+  geom_sf(data = iris)+
+  geom_sf(data=iris_pt, aes(size=n), alpha=.6)+
+  scale_size_area()
+```
