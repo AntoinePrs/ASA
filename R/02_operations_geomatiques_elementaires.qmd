@@ -17,6 +17,12 @@ library(dplyr)
 perils_geo <- read_csv2("../data/perils_geo.csv")
 ```
 
+Il se peut qu'un immeuble ait fait l'objet d'un péril ordinaire et d'un péril imminent. On va donc supperimer les duplicats des adresses.
+
+```{r}
+perils_geo <- perils_geo %>% filter(!duplicated(adress))
+```
+
 ### Transformation en objet spatial
 
 On charge d’abord les packages nécessaires :
@@ -48,6 +54,8 @@ mapview(perils_geo_sf, zcol = "annee", cex = 4)
 On sauvegarde notre nouvelle couche spatiale.
 
 ```{r}
+#| message: false
+#| warning: false
 st_write(perils_geo_sf, "../data/perils_geo.gpkg", append = F)
 ```
 
@@ -70,40 +78,49 @@ iris <- st_transform(iris, 2154)
 perils_geo_sf <- st_transform(perils_geo_sf, 2154)
 ```
 
-Intersection.
+On réalise une jointure spatiale entre notre couche sur les périls et celle des iris en vue d'un dénombrement.
 
 ```{r}
-int <- st_intersection(perils_geo_sf, iris)
+perils_geo_sf_iris <- st_join(perils_geo_sf, iris)
 ```
 
-Débnombrement.
+On effectue le dénombrement grâce à la combinaison de `group_by()` et de `summarise()`
 
 ```{r}
-nb_perils_iris <- int %>% 
+#| message: false
+#| warning: false
+nb_perils_iris <- perils_geo_sf_iris %>% 
   as_tibble() %>% 
   group_by(nom_iris, ident) %>% 
-  tally()
+  summarise(n=n())
 ```
 
-Jointure.
+On ajoute la variable de dénombrement aux IRIS grâce à une jointure attributaire.
 
 ```{r}
 iris <- left_join(iris, nb_perils_iris, by="ident")
 ```
 
-Points dans les polygones (variante du centroïde).
+Dans l'optique de faire une carte en cercles proportionnels, on effectue l'opération `st_point_on_surface()`. Pour de la cartographie, cette option est plus robuste que `st_centroid()` qui peut générer des points hors des polygones (dans le cas d'une forme en croissant par exemple).
 
 ```{r}
 iris_pt <- st_point_on_surface(iris)
 ```
 
-Carto.
+On effectue finalement une cartographie simple.
 
 ```{r}
+#| message: false
+#| warning: false
 library(ggplot2)
 
 ggplot()+
   geom_sf(data = iris)+
   geom_sf(data=iris_pt, aes(size=n), alpha=.6)+
-  scale_size_area()
+  scale_size_area(max_size = 5)+
+  coord_sf(datum = NA)+
+  theme_bw()+
+  labs(title = "Les arrêtés de périls d'immeubles à Bordeaux", 
+       subtitle = "Période 2020-2025",
+       size="Nombre\nd'arrêtés")
 ```
