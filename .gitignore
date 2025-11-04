@@ -6,3 +6,6 @@
 *.gpkg
 data/
 *.pdf
+brouillon.R
+brouillon2.R
+solution_exercice.R
