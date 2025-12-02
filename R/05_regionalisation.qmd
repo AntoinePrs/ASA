@@ -1,0 +1,225 @@
+---
+title: "La régionalisation"
+author: "Antoine Peris"
+format: html
+editor: visual
+lang: fr
+---
+
+## Introduction
+
+### Les méthodes de régionalisation
+
+Les **méthodes de régionalisation** en analyse spatiale regroupent l’ensemble des techniques qui permettent de **découper un espace en zones homogènes** à partir de données statistiques et géographiques.
+
+Contrairement aux découpages administratifs prédéfinis, la régionalisation vise à construire des **régions cohérentes**, en regroupant des unités spatiales voisines selon leur similarité (socio-économique, environnementale, démographique, etc.) ou selon l’intensité de leurs interactions.
+
+Ces méthodes incluent notamment les algorithmes de **clustering spatial** (p. ex. SKATER, REDCAP), l’**agrégation hiérarchique contrainte par la contiguïté**, la détection de **régions d’autocorrélation** ou encore les méthodes basées sur les **flux** (comme Intramax qui regroupe progressivement des unités spatiales en maximisant à chaque étape la part des interactions internes au sein des régions formées).
+
+Les méthodes de régionalisation sont utiles pour révéler des structures spatiales sous-jacentes, produire des zonages adaptés aux phénomènes étudiés et soutenir la prise de décision. Elles servent de base à de nombreuses mailles d'analyse telles que les **Zones d'emploi de l'INSEE** ou les **mailles habitat** du CGDD.
+
+### Objectif du TD
+
+L’objectif du TD est de découvrir la notion de régionalisation en reproduisant la méthode utilisée par le service statistique du Ministère du Logement pour créer la **maille habitat** : une grille qui découpe le territoire national avec pour objectif de regrouper les communes proches qui ont des caractéristiques similaires du point de vue de l'habitat. Cette grille vise à se rapprocher de la notion de marchés locaux du logement.
+
+## Observer les marchés du logement
+
+La maille habitat repose sur 9 indicateurs qui ont été choisis à la suite de réunions avec des expert.e.s. La liste d'indicateurs est la suivante :
+
+-   part de logements sociaux ;
+
+-   part des résidences secondaires ;
+
+-   part de logements vacants ;
+
+-   nombre de personnes par ménage ;
+
+-   durée d'occupation médiane des logements ;
+
+-   l'indicateur de jeunesse du parc : part des logement récents (construits après 1975) rapportés à la part des logements anciens (construits avant 1949) ;
+
+-   part de logements en situation de suroccupation ;
+
+-   prix au mètres carrés dans l'ancien rapportés au revenu médian communal ;
+
+-   taux de transactions dans le marché de l'ancien (nombre de transactions rapporté au nombre de logements).
+
+### Prise en main du fichier de détail des logements
+
+Pour produire ces indicateurs, nous allons effectuer des requêtes sur le fichier détaillé des logements, produit par l'INSEE dans le cadre du Recensement de la population, disponible au format Parquet.
+
+```{r}
+#| message: false
+#| warning: false
+library(DBI)
+library(duckdb)
+
+# Création d'une base en mémoire
+con <- dbConnect(duckdb())
+
+# Création d'une table virtuelle à partir du parquet
+dbExecute(con, "CREATE VIEW logements AS 
+          SELECT * 
+          FROM read_parquet('/media/perisa/data/DATA/INSEE/fichiers_parquet/RP2022_logemt.parquet')")
+```
+
+Dans ce fichier, les lignes sont associées à des poids. Lorsque l'on somme ces poids, on aboutit au nombre de logements couverts par le fichier :
+
+```{r}
+# Requête pour connaitre le nombre de logements couverts par le fichier
+dbGetQuery(con, "SELECT SUM(IPONDL) nblog FROM logements")
+```
+
+Pour limiter le temps de calcul, nous allons nous limiter à une région. Pour cela, nous créons une vue sur les logements de PACA.
+
+```{r}
+dbExecute(con, "CREATE VIEW logements_paca AS SELECT * FROM logements where
+          substr(COMMUNE, 1, 2) IN ('06', '05', '04', '13', '83', '84')")
+
+dbGetQuery(con, "SELECT sum(IPONDL) nblog_paca from logements_paca")
+```
+
+### Calcul des indicateurs sur le parc
+
+On commence par le nombre de logements par commune qui nous servira à construire les ratios.
+
+```{r}
+nblogements <- dbGetQuery(con, "SELECT COMMUNE, SUM(IPONDL) nblog 
+                          FROM logements_paca GROUP BY COMMUNE")
+```
+
+On calcule ensuite le nombre de logements sociaux par commune.
+
+```{r}
+nblogements_sociaux <- dbGetQuery(con, "SELECT COMMUNE, SUM(IPONDL) nblogsoc 
+                                  FROM logements_paca WHERE HLML = '1' 
+                                  GROUP BY COMMUNE")
+```
+
+Pour les logements vacants, la requête est la suivante :
+
+```{r}
+nblogements_vacants <- dbGetQuery(con, "SELECT COMMUNE, SUM(IPONDL) nblogvac 
+                                  FROM logements_paca 
+                                  WHERE CATL = '4' 
+                                  GROUP BY COMMUNE")
+```
+
+Pour les résidences secondaires :
+
+```{r}
+nblogements_secondaires <- dbGetQuery(con, "SELECT COMMUNE, SUM(IPONDL) nblogsec 
+                                      FROM logements_paca 
+                                      WHERE CATL = '3' 
+                                      GROUP BY COMMUNE")
+```
+
+Nombre de personnes par ménage.
+
+```{r}
+personnes_par_menage <- dbGetQuery(con, "SELECT COMMUNE, 
+SUM(INPER::int*IPONDL)/SUM(IPONDL) nbpersmen
+FROM logements_paca 
+WHERE INPER NOT IN ('Y', 'Z')
+GROUP BY COMMUNE")
+```
+
+Pour obtenir la durée d'occupation médiane des logements, c'est un peu plus compliqué parce qu'on doit effectuer une médiane pondérée.
+
+```{r}
+mediane_duree_occupation <- dbGetQuery(con, "WITH cleaned AS (
+    SELECT 
+        COMMUNE,
+        NULLIF(REGEXP_REPLACE(ANEM, '^0+', ''), '')::int AS ANEM_clean,
+        IPONDL
+    FROM logements_paca
+    WHERE ANEM NOT IN ('999', 'ZZZ')
+      AND NULLIF(REGEXP_REPLACE(ANEM, '^0+', ''), '') <> ''
+),
+
+ordered AS (
+    SELECT
+        COMMUNE,
+        ANEM_clean,
+        IPONDL,
+        SUM(IPONDL) OVER (PARTITION BY COMMUNE) AS total_weight,
+        SUM(IPONDL) OVER (PARTITION BY COMMUNE ORDER BY ANEM_clean) AS cum_weight
+    FROM cleaned
+),
+
+median AS (
+    SELECT DISTINCT ON (COMMUNE)
+        COMMUNE,
+        ANEM_clean AS mediane_ponderee
+    FROM ordered
+    WHERE cum_weight >= total_weight / 2.0
+    ORDER BY COMMUNE, ANEM_clean
+)
+
+SELECT *
+FROM median
+ORDER BY COMMUNE;")
+```
+
+Enfin, pour l'indicateur de jeunesse du parc, on a besoin de comptabiliser les logements construits après 1975 et avant 1949. Ces deux dates n'étant pas disponibles dans le fichier de détail de l'INSEE, on va donc utiliser les bornes de 1945 et 1970.
+
+```{r}
+nblogements_age <- dbGetQuery(con, "
+WITH age_logement AS (
+SELECT 
+  COMMUNE,
+  CASE
+    WHEN ACHL IN ('A11', 'A12') THEN 'ancien'
+    WHEN ACHL = 'B12' OR ACHL LIKE 'C%' THEN 'recent'
+    ELSE NULL   -- ou une autre modalité si tu veux
+  END AS ACHL_recode,
+  IPONDL
+FROM logements_paca)
+
+SELECT COMMUNE, ACHL_recode, SUM(IPONDL) nblog
+FROM age_logement
+WHERE ACHL_recode IS NOT NULL
+GROUP BY COMMUNE, ACHL_recode
+") |> 
+  tidyr::pivot_wider(values_from = nblog, 
+                     names_from = ACHL_recode)
+```
+
+Une fois extraits, on peut joindre les tables et calculer les taux.
+
+```{r}
+library(dplyr)
+
+tbl_rp <- nblogements |> 
+  left_join(nblogements_secondaires) |> 
+  left_join(nblogements_sociaux) |> 
+  left_join(nblogements_vacants) |> 
+  left_join(nblogements_age) |>
+  left_join(personnes_par_menage) |>
+  left_join(mediane_duree_occupation)
+
+# On remplace tous les NA du data frame par des 9
+tbl_rp[is.na(tbl_rp)] <- 0
+
+indic <- tbl_rp |> mutate(p_logsec=nblogsec/nblog*100, 
+                 p_logsoc=nblogsoc/nblog*100, 
+                 p_logvac=nblogvac/nblog*100,
+                 ind_jn_parc=(recent/nblog*100)/(ancien/nblog*100),
+                 prs_men=nbpersmen,
+                 durr_occ=mediane_ponderee
+                 ) |> 
+  select(COMMUNE, 
+         nblog,
+         p_logsec, 
+         p_logsoc, 
+         p_logvac, 
+         ind_jn_parc, 
+         prs_men, 
+         durr_occ)
+```
+
+Les autres indicateurs (part de logements en situation de suroccupation, prix au mètres carrés dans l'ancien rapportés au revenu médian communal et taux de transactions dans le marché de l'ancien ne sont pas récupérables à partir de ce fichier. Ils ont donc été préparés par ailleurs.
+
+```{r}
+
+```

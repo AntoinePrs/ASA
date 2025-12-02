@@ -97,7 +97,7 @@ L'indicateur permettant de calculer l'auto-corrélation spatiale globale d'un je
 
 -   **I \< 0** : l'autocorrélation spatiale négative (les valeurs dissemblables sont proches).
 
--   **I ≈ 0** : absence d’autocorrélation spatiale (répartition aléatoire).
+-   **I** $\approx$ **0** : absence d’autocorrélation spatiale (répartition aléatoire).
 
 Il s’appuie sur un **matrice de voisinage** pour quantifier comment les valeurs observées se distribuent spatialement. La première étape de cette analyse est de construire une liste de voisins et de transformer cette liste en matrice de poids spatiaux.
 
@@ -121,7 +121,7 @@ Le calcul de l'indicateur repose sur trois étapes :
 
 -   On commence par regarder si chaque commune a un revenu **plus élevé** ou **plus faible** que la moyenne. On calcule donc $x_i-\overline{x}$.
 
--   Ensuite, on compare cette valeur aux écarts des **communes voisines**, en utilisant une **matrice de voisinage** (listw dans ton code), qui dit quelles communes sont voisines et avec quel poids.
+-   Ensuite, on compare cette valeur aux écarts des **communes voisines**, en utilisant une **matrice de voisinage** (listw dans le code), qui dit quelles communes sont voisines et avec quel poids.
 
 -   Pour permettre la comparaison entre jeux de données, on divise par la somme des carrés des écarts à la moyenne.
 

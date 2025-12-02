@@ -1,0 +1,322 @@
+---
+title: "Le modèle gravitaire"
+author: "Antoine Peris"
+format: html
+editor: visual
+lang: fr
+---
+
+## Introduction
+
+Le modèle gravitaire est une approche inspirée de la physique, qui permet de modéliser les flux entre différentes unités géographiques en fonction de leur "masse" (taille, population, richesse, etc.) et de la distance qui les sépare.
+
+Il est largement utilisé en géographie, économie et transport, par exemple pour : - prédire les flux migratoires entre pays, - estimer les échanges commerciaux internationaux, - analyser la mobilité quotidienne dans les réseaux de transport.
+
+Dans ce script, nous appliquons le modèle gravitaire à un cas d'étude spécifique : la valeur de l'immobilier détenue par des résidents étrangers à Dubaï, en fonction de la population de leur pays d'origine, de la distance à Dubaï et des liens historiques ou culturels (colonial, langue, etc). Ces données sont extraites d'un [travail de l'Observatoire européen de la fiscalité](https://www.taxobservatory.eu/publication/who-owns-offshore-real-estate-evidence-from-dubai/) qui les a obtenu auprès de sources anonymes.
+
+La liste des packages dont on aura besoin pour ce TD est la suivante.
+
+```{r}
+#| message: false
+#| warning: false
+library(readxl)
+library(dplyr)
+library(countrycode)
+library(rnaturalearth)
+library(sf)
+library(geosphere)
+library(ggplot2)
+library(WDI)
+library(mapview)
+```
+
+## Récupération et préparation des données
+
+### Données sur la propriété off-shore à Dubaï
+
+On commence par récupérer les données mises à disposition sur [la page personnelle de Gabriel Zucman](https://gabriel-zucman.eu/who-owns-offshore-real-estate/).
+
+```{r, eval=FALSE}
+#| message: false
+#| warning: false
+url <- "https://gabriel-zucman.eu/files/APZO2022Data.xlsx"
+dest <- "../data/APZO2022Data.xlsx"
+
+download.file(url, dest, mode = "wb")
+```
+
+On charge ensuite les données téléchargées.
+
+```{r}
+#| message: false
+#| warning: false
+d <- read_xlsx("../data/APZO2022Data.xlsx")
+```
+
+La table est d’abord normalisée en attribuant un nom explicite à sa première colonne. La ligne correspondant à World, qui agrège l’ensemble des observations, est ensuite retirée. Seules les entrées associées à un PIB sont conservées. Pour la suite du TD, seules les variables portant sur le nombre de propriétés, leur valeur totale et le PIB national sont retenues.
+
+```{r}
+colnames(d)[1] <- "country"
+df <- d |> filter(country != "World",
+                  !is.na(`GDP (current USD, 2018 or latest available - for coverage)`)) |> 
+  dplyr::select(country, 
+         prop_nb=`Unique Properties`, 
+         prop_value=`Total Property Values`, 
+         gdp=`GDP (current USD, 2018 or latest available - for coverage)`, 
+         avg_prop_value=`Mean Property value`)
+```
+
+Pour faciliter les jointures, on utilise ensuite la fonction `countrycode()` du package éponyme afin de générer un code iso3 à partir du nom du pays.
+
+```{r}
+df$iso3 <- countrycode(df$country, origin = 'country.name', destination = "iso3c")
+```
+
+Deux valeurs n'ont pas fonctionné : le Kosovo, qui n'a pas de code iso3 officiel, et le Kirghizistan dont l'orthographe semble comporter une erreur dans les données. On attribue donc manuellement des codes à ces deux territoires.
+
+```{r}
+df[df$country == "Kosovo",]$iso3 <- "KOS"
+df[df$country == "Kyrgistan",]$iso3  <- "KGZ"
+```
+
+Par ailleurs, comme il s'agit de travailler sur la propriété off-shore, l'immobilier possédé par des Émiratis est retiré de la base.
+
+```{r}
+df <- df |> filter(iso3 != "ARE")
+```
+
+Enfin, lorsqu'un pays concerne moins de 5 ressortissant possédant de l'immobilier à Dubaï, le nombre de bien a été regroupé sous l'appelation "Less than five". On calcule donc le nombre de logement probable par la division de la valeur totale du stock immobilier détenu par des ressortissants du pays par la médiane des moyennes de la valeur des biens.
+
+```{r}
+#| message: false
+#| warning: false
+medmeanvalue <- median(as.numeric(df$avg_prop_value), na.rm = T)
+
+df <- df |> 
+  mutate(prop_nb=ifelse(prop_nb != "Less than five", 
+                        as.numeric(prop_nb), 
+                        round(prop_value/medmeanvalue,0))) |> 
+  mutate(prop_nb=ifelse(prop_nb<1, 1, prop_nb))
+```
+
+### Données géographiques
+
+On récupère ensuite les géométries des pays du monde à l'aide du package **{naturalearth}**.
+
+```{r}
+# Récupération d'une couche des pays
+monde <- ne_countries(scale = "medium", returnclass = "sf")
+monde <- monde |> 
+  mutate(code=ifelse(sovereignt=="Kosovo", "KOS", iso_a3_eh)) |> 
+  select(code, geometry) |> 
+  mutate(area = st_area(geometry)) |>
+  group_by(code) |>
+  slice_max(area, n = 1, with_ties = FALSE) |>
+  ungroup() |>
+  select(-area)  
+```
+
+On effectue ensuite une jointure avec les données géométriques en vue d'une cartographie.
+
+```{r}
+monde_df <- left_join(monde, df, by=c("code"="iso3"))
+```
+
+La carte ci-dessous représente le nombre de propriétés détenues par les résidents des différents pays ainsi que les valeurs associées.
+
+```{r}
+#| message: false
+#| warning: false
+# Calcul des centroïdes pour dessiner des cercles proportionnels
+centroids <- monde_df %>%
+  st_point_on_surface()
+
+# Carte
+ggplot() +
+  geom_sf(data = monde_df, fill = "grey90", color = "gray70", linewidth = 0.2) +
+  geom_sf(
+    data = centroids,
+    aes(size=prop_value/1e6),
+    alpha = 0.6
+  ) +
+  scale_size_area(max_size = 7, breaks = c(1000, 5000, 10000, 20000)) +   # cercles proportionnels en superficie
+  coord_sf(crs = "EPSG:8857") +
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.ticks = element_blank()
+  )+
+  labs(size="Valeur des\npropriétés\n(millions de $)", 
+       title="Immobilier détenu à Dubaï par les résidents des pays en 2019", 
+       caption = "Source : Alstadsaeter et al. 2025")
+```
+
+### Données dyadiques
+
+Une partie des variables 'classiques' d'un modèle gravitaire à l'échelle des Etats peut être récupérée sur le site du CEPII. Il s'agit ici de données 'dyadiques', c'est à dire des données qui caractérisent la relation entre deux pays.
+
+```{r, eval=FALSE}
+url <- "https://www.cepii.fr/distance/dist_cepii.zip"
+dest <- "../data/dist_cepii.zip"
+download.file(url, dest, mode = "wb")
+unzip(dest, exdir = "../data/")
+```
+
+On charge le fichier décompressé.
+
+```{r}
+GeoDist <- read_xls("../data/dist_cepii.xls")
+```
+
+On sélectionne ainsi les variables pour les dyades entre les Emirats Arabes Unis et les autres pays du monde. On conserve les variables relatives à la distance géographique, à la contiguïté spatiale, à l’existence d'un lien colonial et au partage d'une langue commune (ici l'arabe).
+
+```{r}
+GeoDist_UAE <- GeoDist |> 
+  filter(iso_d=="ARE") |> 
+  select(iso_o, contig, comlang_off, colony, dist)
+```
+
+### Données démographiques et économiques
+
+Grâce au package **{WID}**, on peut également récupérer les données de la Banque Mondiale sur le nombre d'habitants et le PIB par habitant.
+
+```{r}
+data_2019 <- WDI(
+  country = "all",
+  indicator = c("population" = "SP.POP.TOTL",
+                "pib_par_hab" = "NY.GDP.PCAP.CD"),
+  start = 2019, end = 2019) %>%
+  filter(!is.na(population)) %>%
+  select(iso3c, year, population, pib_par_hab)
+```
+
+### Table d'analyse
+
+Enfin, on joint toutes ces tables pour former la table de base qui servira à faire des analyses puis on l'écrit.
+
+```{r}
+taban <- left_join(monde_df, GeoDist_UAE, c("code"="iso_o")) |> 
+  left_join(data_2019, c("code"="iso3c"))
+
+#st_write(taban, "../data/table_analyse.gpkg", append=F)
+```
+
+## Modélisation
+
+On commence par supprimer les quelques lignes qui ont un `NA` dans l'une des variables.
+
+```{r}
+taban_clean <- na.omit(taban)
+```
+
+On crée ensuite une couche de centroïdes qui servira à la visualisation des résidus du modèle. On crée par ailleurs un point pour représenter Dubaï sur la carte.
+
+```{r}
+#| message: false
+#| warning: false
+ctr <- st_point_on_surface(taban_clean |> select(code, country, prop_nb, prop_value))
+
+dubai <- st_point_on_surface(monde_df |> filter(code=="ARE"))
+```
+
+La variable dépendante et les variables indépendantes vont ensuite être extraites pour effectuer les différentes régressions.
+
+```{r}
+tab <- taban_clean |> 
+  st_drop_geometry() |> 
+  select(-c(avg_prop_value, year))
+```
+
+Dans une première version du modèle, on va tester si la valeur des propriétés détenues par les résidents est proportionnelle à la taille du pays.
+
+```{r}
+mod1 <- lm(prop_value~population, data = tab)
+summary(mod1)
+```
+
+Le modèle esquisse une relation positive entre la population d’un pays et la valeur immobilière détenue par ses résidents à Dubaï : chaque personne supplémentaire dans la population nationale est associée, en moyenne, à environ 11 unités monétaires de valeur immobilière. Cet effet est très fortement significatif. L’ajustement général reste modeste : avec un R² de 0,38, la population n’explique qu’un peu plus d’un tiers des variations entre pays, et les résidus très larges signalent que d’autres éléments jouent un rôle. Nous allons visualiser les résidus avant d'envisager d'autres variables à introduire.
+
+```{r}
+ctr$resmod1 <- mod1$residuals
+
+# On stocke ici la valeur maximale pour rendre les résidus comparables entre eux.
+max_val <- max(abs(ctr$resmod1))
+
+ggplot()+
+  geom_sf(data = monde_df, fill = "grey90", color = "gray70", linewidth = 0.2) +
+  geom_sf(data = ctr, aes(size=abs(resmod1), color=resmod1>0), alpha=.5)+
+  geom_sf(data = dubai, color="black", shape=3)+
+  scale_size_area(max_size = 10, limits = c(0, max_val))+
+  coord_sf(crs="EPSG:8857", datum = NA)+
+  theme_minimal()
+```
+
+On voit que les pays environnants (Inde, Arabie Saoudite, Iran, Pakistan, Jordanie, etc. ont des résidus positifs très marqués). On introduit donc le facteur de la distance.
+
+```{r}
+mod2 <- lm(prop_value~population+log(dist), data = tab)
+summary(mod2)
+```
+
+L’introduction du log de la distance renforce nettement le modèle : la distance devient un prédicteur négatif fort et très significatif, et l’ajustement global gagne en précision par rapport au modèle n’utilisant que la population. La structure des résidus se resserre, le R² grimpe autour de 0,43, et l’effet de la population reste solide, ce qui montre que la distance expliquée sous forme logarithmique capte une part supplémentaire cohérente des variations entre pays. Ainsi, on peut dire qu'une augmentation d’une unité de log(distance) est associée, en moyenne, à une baisse d’environ un milliard de valeur immobilière détenue, toutes choses égales par ailleurs.
+
+On visualise les résidus de ce nouveau modèle.
+
+```{r}
+ctr$resmod2 <- mod2$residuals
+
+ggplot()+
+  geom_sf(data = monde_df, fill = "grey90", color = "gray70", linewidth = 0.2) +
+  geom_sf(data = ctr, aes(size=abs(resmod2), color=resmod2>0), alpha=.5)+
+  geom_sf(data = dubai, color="black", shape=3)+
+  scale_size_area(max_size = 10, limits = c(0, max_val))+
+  coord_sf(crs="EPSG:8857", datum = NA)+
+  theme_minimal()
+```
+
+Pour enrichir notre modèle initial ne considérant que la population et la distance, nous ajoutons des variables explicatives qualitatives représentant les liens historiques et culturels entre les pays et Dubaï : `comlang_off` pour le partage d’une langue officielle, et `colony` pour les relations coloniales. On ajoute également une variable booléenne pour la contiguité.
+
+```{r}
+mod3 <- lm(prop_value~population+log(dist)+contig+comlang_off+colony, data = tab)
+summary(mod3)
+```
+
+```{r}
+ctr$resmod3 <- mod3$residuals
+
+ggplot()+
+  geom_sf(data = monde_df, fill = "grey90", color = "gray70", linewidth = 0.2) +
+  geom_sf(data = ctr, aes(size=abs(resmod3), color=resmod3>0), alpha=.5)+
+  geom_sf(data = dubai, color="black", shape=3)+
+  scale_size_area(max_size = 10, limits = c(0, max_val))+
+  coord_sf(crs="EPSG:8857", datum = NA)+
+  theme_minimal()
+```
+
+Le modèle final explique environ 57 % de la variance de prop_value, ce qui est une nette amélioration par rapport au premier modèle. Il reste cependant une part importante de la variance a expliquer. Explorons les résultats par une carte interactive afin de chercher des variables à ajouter au modèle.
+
+```{r, eval=F}
+ctr$positif <- ctr$resmod3>0
+ctr$residu_absolu <- abs(ctr$resmod3)
+
+mapview(
+  ctr,
+  zcol = "positif",       # variable pour la couleur
+  col.regions = c("red", "blue"), # couleurs selon TRUE/FALSE
+  cex = "residu_absolu",         # taille proportionnelle à la variable 'valeur'
+  alpha = 0.5,            # transparence
+  legend = TRUE
+)
+```
+
+### Le modèle PPML
+
+```{r}
+mod_ppml <- fixest::feglm(
+  prop_value ~ population + log(dist) + contig + comlang_off + colony,
+  data = tab,
+  family = poisson("log")
+)
+
+summary(mod_ppml)
+```

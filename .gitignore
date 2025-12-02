@@ -3,9 +3,13 @@
 .RData
 .Ruserdata
 *.csv
+*.xls
+*.xlsx
+*.zip
 *.gpkg
 data/
 *.pdf
 brouillon.R
 brouillon2.R
+brouillon3.R
 solution_exercice.R
